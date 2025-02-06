@@ -88,7 +88,7 @@ pub trait SlashingProofData<'a> {
     fn unpack_proof_and_context<'b>(
         proof_account_data: &'a [u8],
         instruction_data: &'a [u8],
-        account_info_iter: &'a mut Iter<'_, AccountInfo<'b>>,
+        accounts: &SlashingAccounts<'_, b>,
     ) -> Result<(Self, Self::Context), SlashingError>
     where
         Self: Sized;
@@ -106,6 +106,7 @@ pub(crate) struct SlashingAccounts<'a, 'b> {
     pub(crate) proof_account: &'a AccountInfo<'b>,
     pub(crate) reporter_account: &'a AccountInfo<'b>,
     pub(crate) violation_pda_account: &'a AccountInfo<'b>,
+    pub(crate) instructions_sysvar: &'a AccountInfo<'b>,
     pub(crate) system_program_account: &'a AccountInfo<'b>,
 }
 
@@ -118,8 +119,12 @@ impl<'a, 'b> SlashingAccounts<'a, 'b> {
             proof_account: next_account_info(account_info_iter)?,
             reporter_account: next_account_info(account_info_iter)?,
             violation_pda_account: next_account_info(account_info_iter)?,
+            instructions_sysvar: next_account_info(account_info_iter)?,
             system_program_account: next_account_info(account_info_iter)?,
         };
+        if !instructions_sysvar::check_id(res.instructions_sysvar.key) {
+            return Err(ProgramError::from(SlashingError::MissingInstructionsSysvar));
+        }
         if !system_program::check_id(res.system_program_account.key) {
             return Err(ProgramError::from(
                 SlashingError::MissingSystemProgramAccount,

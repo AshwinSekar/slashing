@@ -154,15 +154,13 @@ impl<'a> SlashingProofData<'a> for DuplicateBlockProofData<'a> {
     fn unpack_proof_and_context<'b>(
         proof_account_data: &'a [u8],
         instruction_data: &'a [u8],
-        account_info_iter: &'a mut Iter<'_, AccountInfo<'b>>,
+        accounts: &SlashingAccounts<'_, 'b>,
     ) -> Result<(Self, Self::Context), SlashingError>
     where
         Self: Sized,
     {
-        let instructions_sysvar = next_account_info(account_info_iter)
-            .map_err(|_| SlashingError::MissingInstructionsSysvar)?;
         let context =
-            DuplicateBlockProofContext::unpack_context(instruction_data, instructions_sysvar)?;
+            DuplicateBlockProofContext::unpack_context(instruction_data, accounts.instructions_sysvar)?;
 
         Ok((Self::unpack_proof(proof_account_data)?, context))
     }
