@@ -38,7 +38,7 @@ impl ProofType {
             Self::InvalidType => panic!("Cannot determine size of invalid proof type"),
             Self::DuplicateBlockProof => {
                 // Duplicate block proof consists of 2 shreds that can be `PACKET_DATA_SIZE`.
-                DuplicateBlockProofData::size_of(PACKET_DATA_SIZE)
+                DuplicateBlockProofData::size(PACKET_DATA_SIZE)
             }
         }
     }
@@ -223,7 +223,7 @@ where
 
     // Create the account via CPI
     let data_len = std::mem::size_of::<ViolationReport>()
-        .checked_add(proof_data.size())
+        .checked_add(proof_data.packed_len())
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let lamports = Rent::get()?.minimum_balance(data_len);
     let create_account_ix = system_instruction::create_account(
